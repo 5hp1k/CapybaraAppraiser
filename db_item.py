@@ -5,3 +5,4 @@ class Item:
         self.url = url
         self.opinion = opinion
         self.comment = comment
+        
