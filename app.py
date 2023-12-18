@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QToolButton, QInputDialog, QLineEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QToolButton, QInputDialog, QLineEdit, QMessageBox
 from PyQt5.QtCore import QSize, QSettings
 from PyQt5.QtGui import QIcon
 from PyQt5 import uic
@@ -7,7 +7,7 @@ import sys
 from request_picture import get_picture
 from settings_widget import SettingsWidget
 from db_widget import DbWidget
-from db_item import Item
+from db_manipulate import Record, insert_item
 
 
 class MainWindow(QMainWindow):
@@ -42,10 +42,7 @@ class MainWindow(QMainWindow):
         self.dbButton.clicked.connect(self.open_db_widget)
 
     def get_picture_handler(self):
-        settings = QSettings('MyApp', 'MySettings')
-        is_database_load = settings.value('saveBox', False, type=bool)
-
-        if is_database_load:
+        if self.check_settings():  # Если в настройках стоит галочка
             print("Loading a picture from the database...")
         else:
             print("Getting a picture via API...")
@@ -57,8 +54,14 @@ class MainWindow(QMainWindow):
         text, ok_pressed = QInputDialog.getText(self, "Save",
                                                 "Comment the picture you want to save:", QLineEdit.Normal, "")
         if ok_pressed:
-            save_item = Item(self.titleLabel, self.imageLabel.text, 'Like', text)
-            print(f"Created a new item to save into the database:{save_item}")
+            if self.check_settings():
+                save_item = Record(None, self.titleLabel.text(), self.imageLabel.text(),
+                                   'Neutral', text)
+                print(f"Created a new record to save into the database:{save_item}")
+                insert_item(save_item)
+            else:
+                QMessageBox.critical(self, "Error", "Cannot save a record to the database "
+                                                    "without being connected to it", QMessageBox.Ok)
 
     def open_settings(self):
         self.settings_widget.exec_()
@@ -67,6 +70,12 @@ class MainWindow(QMainWindow):
     def open_db_widget(self):
         self.db_widget.exec_()
         print('Opened database editor')
+
+    @staticmethod
+    def check_settings():
+        settings = QSettings('MyApp', 'MySettings')
+
+        return settings.value('saveBox', False, type=bool)
 
 
 def except_hook(cls, exception, traceback):
