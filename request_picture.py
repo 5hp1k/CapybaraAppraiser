@@ -1,11 +1,16 @@
 import requests
 from PyQt5.QtGui import QPixmap
 
+from capy_exceptions import PictureClassInitError
+
 
 class Picture:
     def __init__(self, url, title):
-        self.url = url
-        self.title = title
+        if type(url) is str and type(title) is str:
+            self.url = url
+            self.title = title
+        else:
+            raise PictureClassInitError
 
     def render_picture(self, output_label, title_label):
         if not self.url:
@@ -39,3 +44,5 @@ def get_picture():
         print(f"An error occured while requesting an image: {e}")
         return Picture('', 'A error occured while requesting an image')
 
+    except PictureClassInitError as e:
+        print(e.message)

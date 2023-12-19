@@ -3,6 +3,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5 import uic
 
 import db_manipulate
+from capy_exceptions import RecordIdTypeException, EmptyDataBaseException
 
 
 class DbWidget(QDialog):
@@ -12,7 +13,6 @@ class DbWidget(QDialog):
         self.setFixedSize(self.size())
 
         db_manipulate.create_table()
-        self.fill_table_widget()
 
         self.setWindowIcon(QIcon('resources/icon.png'))
         self.returnButton.setIcon(QIcon('resources/return.png'))
@@ -31,9 +31,8 @@ class DbWidget(QDialog):
     def load_handler(self):
         try:
             self.fill_table_widget()
-        except IndexError as e:
-            print('Cannot load from an empty DB', e)
-            QMessageBox.critical(self, "Error", f"Cannot load from an empty DB: {e}", QMessageBox.Ok)
+        except EmptyDataBaseException as e:
+            QMessageBox.warning(self, "Error", e.message, QMessageBox.Ok)
 
     def save_handler(self):
         try:
@@ -51,7 +50,7 @@ class DbWidget(QDialog):
             QMessageBox.critical(self, "Error", f"Cannot save an empty record: {e}", QMessageBox.Ok)
 
     def fill_table_widget(self):
-        try:
+        if db_manipulate.get_items_count() > 0:
             records = db_manipulate.retrieve_items()
             self.tableWidget.clear()
             num_columns = len(records[0])
@@ -61,10 +60,11 @@ class DbWidget(QDialog):
             for i, record in enumerate(records):
                 for j, field in enumerate(record):
                     self.tableWidget.setItem(i, j, QTableWidgetItem(str(field)))
-        except IndexError as e:
-            print(f'Cannot load anything from an empty database {e}')
-            QMessageBox.critical(self, "Error", f'Cannot load anything '
-                                                f'from an empty database {e}', QMessageBox.Ok)
+        else:
+            self.tableWidget.clear()
+            self.tableWidget.setColumnCount(0)
+            self.tableWidget.setRowCount(0)
+            raise EmptyDataBaseException
 
     def on_item_selected(self):
         self.tableWidget.selectionModel().selectedRows()
@@ -93,4 +93,8 @@ class DbWidget(QDialog):
                 QMessageBox.warning(self, 'Error', 'No record selected for deletion.', QMessageBox.Ok)
         except AttributeError as e:
             print(f"Cannot delete an empty item: {e}")
-            QMessageBox.critical(self, "Error", f"Cannot delete an empty item: {e}", QMessageBox.Ok)
+            QMessageBox.warning(self, "Error", f"Cannot delete an empty item: {e}", QMessageBox.Ok)
+        except RecordIdTypeException as e:
+            QMessageBox.critical(self, "Error", f"Critical error: {e.message}", QMessageBox.Ok)
+        except EmptyDataBaseException:
+            pass

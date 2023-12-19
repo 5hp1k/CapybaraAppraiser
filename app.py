@@ -8,7 +8,8 @@ import urllib3
 from request_picture import Picture, get_picture
 from settings_widget import SettingsWidget
 from db_widget import DbWidget
-from db_manipulate import Record, insert_item, retrieve_items
+from db_manipulate import Record, insert_record, retrieve_items
+from capy_exceptions import *
 
 
 class MainWindow(QMainWindow):
@@ -58,12 +59,15 @@ class MainWindow(QMainWindow):
             else:
                 print("Getting a picture via API...")
                 self.currentImage = get_picture()
-
-            if self.currentImage:
                 self.currentImage.render_picture(self.imageLabel, self.titleLabel)
                 self.getPictureButton.setText("Next Picture")
+
+            if self.currentImage:
                 self.likeButton.setChecked(False)
                 self.dislikeButton.setChecked(False)
+
+        except EmptyDataBaseException as e:
+            QMessageBox.warning(self, 'Error', e.message, QMessageBox.Ok)
 
         except urllib3.exceptions.NameResolutionError as e:
             QMessageBox.critical(self, "Error", f'An error occurred while resolving the host name: {e}', QMessageBox.Ok)
@@ -83,12 +87,14 @@ class MainWindow(QMainWindow):
                 save_item = Record(None, self.currentImage.title, self.currentImage.url,
                                    opinion, text)
                 print(f"Created a new record to save into the database:{save_item}")
-                insert_item(save_item)
+                insert_record(save_item)
 
                 self.likeButton.setChecked(False)
                 self.dislikeButton.setChecked(False)
             except AttributeError as e:
-                QMessageBox.critical(self, "Error", f"Cannot save an empty image: {e}", QMessageBox.Ok)
+                QMessageBox.warning(self, "Error", f"Cannot save an empty image: {e}", QMessageBox.Ok)
+            except InvalidRecordException as e:
+                QMessageBox.critical(self, "Error", f"Critical error: {e.message}", QMessageBox.Ok)
 
     def open_settings(self):
         self.settings_widget.exec_()
@@ -112,13 +118,17 @@ class MainWindow(QMainWindow):
                 url = urls[self.current_index]
                 title = comments[self.current_index]
                 self.currentImage = Picture(url, title)
+                self.getPictureButton.setText("Next Picture")
+                self.currentImage.render_picture(self.imageLabel, self.titleLabel)
             else:
-                print("Can't load a picture from an empty database")
                 self.currentImage = Picture('', 'No picture was loaded')
+                self.currentImage.render_picture(self.imageLabel, self.titleLabel)
+                raise EmptyDataBaseException
         else:
-            print("Can't load a picture from an empty database")
             self.db_items = None
             self.currentImage = Picture('', 'No picture was loaded')
+            self.currentImage.render_picture(self.imageLabel, self.titleLabel)
+            raise EmptyDataBaseException
 
     def update_ui(self):
         self.saveButton.setEnabled(not self.check_settings())

@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSettings
 from PyQt5 import uic
+from capy_exceptions import InvalidSettingsException
 
 
 class SettingsWidget(QDialog):
@@ -29,6 +30,9 @@ class SettingsWidget(QDialog):
         # Сохранение состояния чекбокса
         settings = QSettings('MyApp', 'MySettings')
         settings.setValue('saveBox', self.saveBox.isChecked())
+
+        if settings.value('saveBox', False, type=bool) not in [True, False]:
+            raise InvalidSettingsException
 
         self.hide()
         print("Applied settings and closed the settings window.")

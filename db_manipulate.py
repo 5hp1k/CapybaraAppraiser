@@ -1,5 +1,6 @@
 import sqlite3
 from sqlite3 import Error
+from capy_exceptions import InvalidRecordException, RecordIdTypeException
 
 
 class Record:
@@ -43,39 +44,49 @@ def create_table():
     conn.close()
 
 
-def insert_item(item):
+def insert_record(record):
     """Добавление записи в базу данных"""
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Вставляем данные в таблицу
-    cursor.execute('''
-        INSERT INTO items (id, title, url, opinion, comment)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (item.id, item.title, item.url, item.opinion, item.comment))
+    if type(record) is Record:
+        # Вставляем данные в таблицу
+        cursor.execute('''
+            INSERT INTO items (id, title, url, opinion, comment)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (record.id, record.title, record.url, record.opinion, record.comment))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
+    else:
+        raise InvalidRecordException
 
 
 def update_item(record):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE items SET title = ?, url = ?, opinion = ?, comment = ? WHERE id = ?",
-                   (record.title, record.url, record.opinion, record.comment, record.id))
-    conn.commit()
-    conn.close()
+
+    if type(record) is Record:
+        cursor.execute("UPDATE items SET title = ?, url = ?, opinion = ?, comment = ? WHERE id = ?",
+                       (record.title, record.url, record.opinion, record.comment, record.id))
+        conn.commit()
+        conn.close()
+    else:
+        raise InvalidRecordException
 
 
 def delete_item(item_id):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Удаляем запись из таблицы по id
-    cursor.execute("DELETE FROM items WHERE id = ?", (item_id,))
+    if type(item_id) in [int, float]:
+        # Удаляем запись из таблицы по id
+        cursor.execute("DELETE FROM items WHERE id = ?", (item_id,))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
+    else:
+        raise RecordIdTypeException
 
 
 def retrieve_items():
