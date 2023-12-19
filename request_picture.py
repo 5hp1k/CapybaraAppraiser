@@ -13,17 +13,27 @@ class Picture:
             raise PictureClassInitError
 
     def render_picture(self, output_label, title_label):
-        if not self.url:
-            # Очистка Pixmap, если URL пуст
-            output_label.clear()
-            title_label.clear()
-        else:
-            pixmap = QPixmap()
-            pixmap.loadFromData(requests.get(self.url).content)
-            scaled_pixmap = pixmap.scaled(output_label.size())
-            output_label.setPixmap(scaled_pixmap)
+        try:
+            if not self.url:
+                # Очистка Pixmap, если URL пуст
+                output_label.clear()
+                title_label.clear()
+            else:
+                pixmap = QPixmap()
+                pixmap.loadFromData(requests.get(self.url).content)
+                scaled_pixmap = pixmap.scaled(output_label.size())
+                output_label.setPixmap(scaled_pixmap)
 
-        title_label.setText(self.title)
+            title_label.setText(self.title)
+
+        except requests.exceptions.MissingSchema:
+            return Picture('', 'One of the database elements has wrong URL').render_picture(output_label, title_label)
+
+        except requests.RequestException:
+            return Picture('', 'A error occured while requesting an image').render_picture(output_label,
+                                                                                           title_label)
+        except PictureClassInitError as e:
+            return Picture('', e.message).render_picture(output_label, title_label)
 
 
 def get_picture():
@@ -35,10 +45,12 @@ def get_picture():
         url = data['data']['url']
         title = data['data']['alt']
 
-        print(f'Successfully recieved an image: {url}\n{title}')
-
         # Возвращаем класс изображения
         return Picture(url, title)
+
+    except requests.exceptions.MissingSchema as e:
+        print(f"Invalid URL: {e}")
+        return Picture('', 'Wrong URL')
 
     except requests.RequestException as e:
         print(f"An error occured while requesting an image: {e}")
