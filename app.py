@@ -4,10 +4,10 @@ from PyQt5.QtGui import QIcon
 from PyQt5 import uic
 import sys
 
-from request_picture import get_picture
+from request_picture import Picture, get_picture
 from settings_widget import SettingsWidget
 from db_widget import DbWidget
-from db_manipulate import Record, insert_item
+from db_manipulate import Record, insert_item, retrieve_items, get_items_count
 
 
 class MainWindow(QMainWindow):
@@ -19,6 +19,10 @@ class MainWindow(QMainWindow):
 
         self.settings_widget = SettingsWidget()
         self.db_widget = DbWidget()
+
+        self.currentImage = None
+        self.current_index = 0  # Индекс текущей картинки
+        self.db_items = None
 
         self.setWindowIcon(QIcon('resources/icon.png'))
 
@@ -36,45 +40,86 @@ class MainWindow(QMainWindow):
                 button.setIcon(QIcon(icon_path))
                 button.setIconSize(QSize(32, 32))
 
+        self.likeButton.setCheckable(True)
+        self.dislikeButton.setCheckable(True)
+
         self.getPictureButton.clicked.connect(self.get_picture_handler)
         self.saveButton.clicked.connect(self.save_handler)
         self.settingsButton.clicked.connect(self.open_settings)
         self.dbButton.clicked.connect(self.open_db_widget)
+        self.update_ui()
 
     def get_picture_handler(self):
         if self.check_settings():  # Если в настройках стоит галочка
-            print("Loading a picture from the database...")
+            if get_items_count() > 0:
+                print("Loading a picture from the database...")
+                self.load_images_from_db()
+                self.current_index = (self.current_index + 1) % len(self.db_items)
+            else:
+                print("Can't load a picture from an empty database")
+                self.db_items = None
+                self.currentImage = Picture('', 'No picture was loaded')
         else:
             print("Getting a picture via API...")
-            get_picture(self.imageLabel, self.titleLabel)
+            self.currentImage = get_picture()
+
+        self.currentImage.render_picture(self.imageLabel, self.titleLabel)
 
         self.getPictureButton.setText("Next Picture")
+        self.likeButton.setChecked(False)
+        self.dislikeButton.setChecked(False)
 
     def save_handler(self):
         text, ok_pressed = QInputDialog.getText(self, "Save",
                                                 "Comment the picture you want to save:", QLineEdit.Normal, "")
         if ok_pressed:
-            if self.check_settings():
-                save_item = Record(None, self.titleLabel.text(), self.imageLabel.text(),
-                                   'Neutral', text)
+            try:
+                opinion = 'Neutral'
+                if self.likeButton.isChecked():
+                    opinion = 'Like'
+                elif self.dislikeButton.isChecked():
+                    opinion = 'Dislike'
+
+                print(f'saving {self.currentImage.url}')
+                save_item = Record(None, self.currentImage.title, self.currentImage.url,
+                                   opinion, text)
                 print(f"Created a new record to save into the database:{save_item}")
                 insert_item(save_item)
-            else:
-                QMessageBox.critical(self, "Error", "Cannot save a record to the database "
-                                                    "without being connected to it", QMessageBox.Ok)
+
+                self.likeButton.setChecked(False)
+                self.dislikeButton.setChecked(False)
+            except AttributeError as e:
+                QMessageBox.critical(self, "Error", f"Cannot save an empty image: {e}", QMessageBox.Ok)
 
     def open_settings(self):
         self.settings_widget.exec_()
         print('Opened settings window')
+        self.update_ui()
 
     def open_db_widget(self):
         self.db_widget.exec_()
         print('Opened database editor')
+        self.update_ui()
+
+    def load_images_from_db(self):
+        if not self.db_items:
+            self.db_items = retrieve_items()
+
+        urls = [item[2] for item in self.db_items]
+        comments = [item[4] for item in self.db_items]
+
+        url = urls[self.current_index]
+        title = comments[self.current_index]
+        self.currentImage = Picture(url, title)
+
+    def update_ui(self):
+        self.saveButton.setEnabled(not self.check_settings())
+        self.likeButton.setEnabled(not self.check_settings())
+        self.dislikeButton.setEnabled(not self.check_settings())
 
     @staticmethod
     def check_settings():
         settings = QSettings('MyApp', 'MySettings')
-
         return settings.value('saveBox', False, type=bool)
 
 

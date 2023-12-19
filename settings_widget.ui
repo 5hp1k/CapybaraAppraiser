@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Connect to the database</string>
+    <string>Load pictures from the database</string>
    </property>
   </widget>
   <widget class="QPushButton" name="applyButton">

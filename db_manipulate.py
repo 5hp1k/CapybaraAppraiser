@@ -12,7 +12,7 @@ class Record:
         self.comment = comment
 
 
-def get_сonnection():
+def get_connection():
     connection = None
     try:
         connection = sqlite3.connect('capybara.db')
@@ -25,7 +25,7 @@ def get_сonnection():
 
 def create_table():
     """Создание таблицы в базе данных"""
-    conn = get_сonnection()
+    conn = get_connection()
     cursor = conn.cursor()
 
     # Создаем таблицу, если она не существует
@@ -45,7 +45,7 @@ def create_table():
 
 def insert_item(item):
     """Добавление записи в базу данных"""
-    conn = get_сonnection()
+    conn = get_connection()
     cursor = conn.cursor()
 
     # Вставляем данные в таблицу
@@ -59,7 +59,7 @@ def insert_item(item):
 
 
 def update_item(record):
-    conn = get_сonnection()
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE items SET title = ?, url = ?, opinion = ?, comment = ? WHERE id = ?",
                    (record.title, record.url, record.opinion, record.comment, record.id))
@@ -68,7 +68,7 @@ def update_item(record):
 
 
 def delete_item(item_id):
-    conn = get_сonnection()
+    conn = get_connection()
     cursor = conn.cursor()
 
     # Удаляем запись из таблицы по id
@@ -80,7 +80,7 @@ def delete_item(item_id):
 
 def retrieve_items():
     """Получение всех записей из базы данных"""
-    conn = get_сonnection()
+    conn = get_connection()
     cursor = conn.cursor()
 
     # Получаем все записи из таблицы
@@ -90,3 +90,17 @@ def retrieve_items():
     conn.close()
 
     return items
+
+
+def get_items_count():
+    """Получение количества записей в базе данных"""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Получаем количество записей в таблице
+    cursor.execute('SELECT COUNT(*) FROM items')
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
