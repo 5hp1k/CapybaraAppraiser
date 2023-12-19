@@ -15,13 +15,16 @@ class DbWidget(QDialog):
         db_manipulate.create_table()
 
         self.setWindowIcon(QIcon('resources/icon.png'))
+
         self.returnButton.setIcon(QIcon('resources/return.png'))
         self.deleteButton.setIcon(QIcon('resources/delete.png'))
+        self.clearButton.setIcon(QIcon('resources/clear.png'))
 
         self.returnButton.clicked.connect(self.return_handler)
         self.loadButton.clicked.connect(self.load_handler)
         self.saveButton.clicked.connect(self.save_handler)
         self.deleteButton.clicked.connect(self.delete_selected_item)
+        self.clearButton.clicked.connect(self.clear_handler)
 
         self.tableWidget.itemSelectionChanged.connect(self.on_item_selected)
 
@@ -48,6 +51,16 @@ class DbWidget(QDialog):
         except AttributeError as e:
             print(f"Cannot save an empty record: {e}")
             QMessageBox.critical(self, "Error", f"Cannot save an empty record: {e}", QMessageBox.Ok)
+
+    def clear_handler(self):
+        reply = QMessageBox.question(self, 'Confirm', 'Do you want to delete everything from the database?',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            if db_manipulate.get_items_count() > 0:
+                db_manipulate.clear_table()
+            else:
+                QMessageBox.warning(self, 'Error', 'The database is empty. Nothing to delete.', QMessageBox.Ok)
 
     def fill_table_widget(self):
         if db_manipulate.get_items_count() > 0:

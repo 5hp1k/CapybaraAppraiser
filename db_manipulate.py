@@ -89,6 +89,16 @@ def delete_item(item_id):
         raise RecordIdTypeException
 
 
+def clear_table():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('DELETE FROM items')
+
+    conn.commit()
+    conn.close()
+
+
 def retrieve_items():
     """Получение всех записей из базы данных"""
     conn = get_connection()

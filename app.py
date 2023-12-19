@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         self.settings_widget = SettingsWidget()
         self.db_widget = DbWidget()
 
-        self.currentImage = Picture('', '')
+        self.current_image = Picture('', '')
         self.current_index = 0  # Индекс текущей картинки
         self.db_items = None
 
@@ -58,11 +58,11 @@ class MainWindow(QMainWindow):
                 self.load_images_from_db()
             else:
                 print("Getting a picture via API...")
-                self.currentImage = get_picture()
-                self.currentImage.render_picture(self.imageLabel, self.titleLabel)
+                self.current_image = get_picture()
+                self.current_image.render_picture(self.imageLabel, self.titleLabel)
                 self.getPictureButton.setText("Next Picture")
 
-            if self.currentImage:
+            if self.current_image:
                 self.likeButton.setChecked(False)
                 self.dislikeButton.setChecked(False)
 
@@ -77,22 +77,24 @@ class MainWindow(QMainWindow):
                                                 "Comment the picture you want to save:", QLineEdit.Normal, "")
         if ok_pressed:
             try:
-                opinion = 'Neutral'
-                if self.likeButton.isChecked():
-                    opinion = 'Like'
-                elif self.dislikeButton.isChecked():
-                    opinion = 'Dislike'
+                if self.current_image.url != '':
+                    opinion = 'Neutral'
+                    if self.likeButton.isChecked():
+                        opinion = 'Like'
+                    elif self.dislikeButton.isChecked():
+                        opinion = 'Dislike'
 
-                print(f'saving {self.currentImage.url}')
-                save_item = Record(None, self.currentImage.title, self.currentImage.url,
-                                   opinion, text)
-                print(f"Created a new record to save into the database:{save_item}")
-                insert_record(save_item)
+                    print(f'saving {self.current_image.url}')
+                    save_item = Record(None, self.current_image.title, self.current_image.url,
+                                       opinion, text)
+                    print(f"Created a new record to save into the database:{save_item}")
+                    insert_record(save_item)
+                else:
+                    QMessageBox.warning(self, 'Error', "Cannot save an empty image.", QMessageBox.Ok)
 
                 self.likeButton.setChecked(False)
                 self.dislikeButton.setChecked(False)
-            except AttributeError as e:
-                QMessageBox.warning(self, "Error", f"Cannot save an empty image: {e}", QMessageBox.Ok)
+
             except InvalidRecordException as e:
                 QMessageBox.critical(self, "Error", f"Critical error: {e.message}", QMessageBox.Ok)
 
@@ -114,20 +116,24 @@ class MainWindow(QMainWindow):
             comments = [item[4] for item in self.db_items]
 
             if urls and comments:
-                self.current_index = (self.current_index + 1) % len(self.db_items)
-                url = urls[self.current_index]
-                title = comments[self.current_index]
-                self.currentImage = Picture(url, title)
-                self.getPictureButton.setText("Next Picture")
-                self.currentImage.render_picture(self.imageLabel, self.titleLabel)
+                if '' not in urls and '' not in comments:
+                    self.current_index = (self.current_index + 1) % len(self.db_items)
+                    url = urls[self.current_index]
+                    title = comments[self.current_index]
+                    self.current_image = Picture(url, title)
+                    self.getPictureButton.setText("Next Picture")
+                    self.current_image.render_picture(self.imageLabel, self.titleLabel)
+                else:
+                    self.current_image = Picture('', 'One of the database elements has wrong URL')
+                    self.current_image.render_picture(self.imageLabel, self.titleLabel)
             else:
-                self.currentImage = Picture('', 'No picture was loaded')
-                self.currentImage.render_picture(self.imageLabel, self.titleLabel)
+                self.current_image = Picture('', 'No picture was loaded')
+                self.current_image.render_picture(self.imageLabel, self.titleLabel)
                 raise EmptyDataBaseException
         else:
             self.db_items = None
-            self.currentImage = Picture('', 'No picture was loaded')
-            self.currentImage.render_picture(self.imageLabel, self.titleLabel)
+            self.current_image = Picture('', 'No picture was loaded')
+            self.current_image.render_picture(self.imageLabel, self.titleLabel)
             raise EmptyDataBaseException
 
     def update_ui(self):

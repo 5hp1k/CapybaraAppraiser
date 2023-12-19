@@ -14,7 +14,7 @@ class Picture:
 
     def render_picture(self, output_label, title_label):
         try:
-            if not self.url:
+            if not self.url or self.url == '':
                 # Очистка Pixmap, если URL пуст
                 output_label.clear()
                 title_label.clear()
