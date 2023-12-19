@@ -3,6 +3,7 @@ from PyQt5.QtCore import QSize, QSettings
 from PyQt5.QtGui import QIcon
 from PyQt5 import uic
 import sys
+import urllib3
 
 from request_picture import Picture, get_picture
 from settings_widget import SettingsWidget
@@ -20,7 +21,7 @@ class MainWindow(QMainWindow):
         self.settings_widget = SettingsWidget()
         self.db_widget = DbWidget()
 
-        self.currentImage = None
+        self.currentImage = Picture('', '')
         self.current_index = 0  # Индекс текущей картинки
         self.db_items = None
 
@@ -50,24 +51,22 @@ class MainWindow(QMainWindow):
         self.update_ui()
 
     def get_picture_handler(self):
-        if self.check_settings():  # Если в настройках стоит галочка
-            if get_items_count() > 0:
+        try:
+            if self.check_settings():  # Если в настройках стоит галочка
                 print("Loading a picture from the database...")
                 self.load_images_from_db()
-                self.current_index = (self.current_index + 1) % len(self.db_items)
             else:
-                print("Can't load a picture from an empty database")
-                self.db_items = None
-                self.currentImage = Picture('', 'No picture was loaded')
-        else:
-            print("Getting a picture via API...")
-            self.currentImage = get_picture()
+                print("Getting a picture via API...")
+                self.currentImage = get_picture()
 
-        self.currentImage.render_picture(self.imageLabel, self.titleLabel)
+            if self.currentImage:
+                self.currentImage.render_picture(self.imageLabel, self.titleLabel)
+                self.getPictureButton.setText("Next Picture")
+                self.likeButton.setChecked(False)
+                self.dislikeButton.setChecked(False)
 
-        self.getPictureButton.setText("Next Picture")
-        self.likeButton.setChecked(False)
-        self.dislikeButton.setChecked(False)
+        except urllib3.exceptions.NameResolutionError as e:
+            QMessageBox.critical(self, "Error", f'An error occurred while resolving the host name: {e}', QMessageBox.Ok)
 
     def save_handler(self):
         text, ok_pressed = QInputDialog.getText(self, "Save",
@@ -102,15 +101,24 @@ class MainWindow(QMainWindow):
         self.update_ui()
 
     def load_images_from_db(self):
-        if not self.db_items:
-            self.db_items = retrieve_items()
+        self.db_items = retrieve_items()
 
-        urls = [item[2] for item in self.db_items]
-        comments = [item[4] for item in self.db_items]
+        if self.db_items:
+            urls = [item[2] for item in self.db_items]
+            comments = [item[4] for item in self.db_items]
 
-        url = urls[self.current_index]
-        title = comments[self.current_index]
-        self.currentImage = Picture(url, title)
+            if urls and comments:
+                self.current_index = (self.current_index + 1) % len(self.db_items)
+                url = urls[self.current_index]
+                title = comments[self.current_index]
+                self.currentImage = Picture(url, title)
+            else:
+                print("Can't load a picture from an empty database")
+                self.currentImage = Picture('', 'No picture was loaded')
+        else:
+            print("Can't load a picture from an empty database")
+            self.db_items = None
+            self.currentImage = Picture('', 'No picture was loaded')
 
     def update_ui(self):
         self.saveButton.setEnabled(not self.check_settings())

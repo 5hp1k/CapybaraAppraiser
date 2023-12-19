@@ -37,3 +37,5 @@ def get_picture():
 
     except requests.RequestException as e:
         print(f"An error occured while requesting an image: {e}")
+        return Picture('', 'A error occured while requesting an image')
+
