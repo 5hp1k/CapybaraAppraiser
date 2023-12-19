@@ -8,7 +8,7 @@ import urllib3
 from request_picture import Picture, get_picture
 from settings_widget import SettingsWidget
 from db_widget import DbWidget
-from db_manipulate import Record, insert_item, retrieve_items, get_items_count
+from db_manipulate import Record, insert_item, retrieve_items
 
 
 class MainWindow(QMainWindow):
