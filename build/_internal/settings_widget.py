@@ -8,9 +8,9 @@ from capy_exceptions import InvalidSettingsException
 class SettingsWidget(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('settings_widget.ui', self)
+        uic.loadUi('resources/ui/settings_widget.ui', self)
         self.setFixedSize(self.size())
-        self.setWindowIcon(QIcon('resources/icon.png'))
+        self.setWindowIcon(QIcon('resources/images/icon.png'))
 
         # Загрузка сохраненного состояния чекбокса
         settings = QSettings('MyApp', 'MySettings')

@@ -35,6 +35,9 @@ class Picture:
         except PictureClassInitError as e:
             return Picture('', e.message).render_picture(output_label, title_label)
 
+    def get_data(self):
+        return requests.get(self.url).content
+
 
 def get_picture():
     """Получение изображения с капибарой через API с использованием библиотеки requests."""

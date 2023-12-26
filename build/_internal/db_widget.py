@@ -9,16 +9,16 @@ from capy_exceptions import RecordIdTypeException, EmptyDataBaseException
 class DbWidget(QDialog):
     def __init__(self):
         super().__init__()
-        uic.loadUi('db_widget.ui', self)
+        uic.loadUi('resources/ui/db_widget.ui', self)
         self.setFixedSize(self.size())
 
         db_manipulate.create_table()
 
-        self.setWindowIcon(QIcon('resources/icon.png'))
+        self.setWindowIcon(QIcon('resources/images/icon.png'))
 
-        self.returnButton.setIcon(QIcon('resources/return.png'))
-        self.deleteButton.setIcon(QIcon('resources/delete.png'))
-        self.clearButton.setIcon(QIcon('resources/clear.png'))
+        self.returnButton.setIcon(QIcon('resources/images/return.png'))
+        self.deleteButton.setIcon(QIcon('resources/images/delete.png'))
+        self.clearButton.setIcon(QIcon('resources/images/clear.png'))
 
         self.returnButton.clicked.connect(self.return_handler)
         self.loadButton.clicked.connect(self.load_handler)
