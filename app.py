@@ -16,7 +16,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('app.ui', self)
+        uic.loadUi('resources/ui/app.ui', self)
         self.setFixedSize(self.size())
 
         self.settings_widget = SettingsWidget()
@@ -26,14 +26,14 @@ class MainWindow(QMainWindow):
         self.current_index = 0  # Индекс текущей картинки
         self.db_items = None
 
-        self.setWindowIcon(QIcon('resources/icon.png'))
+        self.setWindowIcon(QIcon('resources/images/icon.png'))
 
         icon_paths = {
-            'likeButton': 'resources/like.png',
-            'dislikeButton': 'resources/dislike.png',
-            'saveButton': 'resources/save.png',
-            'settingsButton': 'resources/settings.png',
-            'dbButton': 'resources/db.png'
+            'likeButton': 'resources/images/like.png',
+            'dislikeButton': 'resources/images/dislike.png',
+            'saveButton': 'resources/images/save.png',
+            'settingsButton': 'resources/images/settings.png',
+            'dbButton': 'resources/images/db.png'
         }
 
         for button_name, icon_path in icon_paths.items():
