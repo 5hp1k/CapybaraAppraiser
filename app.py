@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QToolButton, QInputDialog, QLineEdit, QMessageBox
-from PyQt5.QtCore import QSize, QSettings
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication, QMainWindow, QToolButton, QInputDialog, QLineEdit, QMessageBox, QFileDialog
+from PyQt5.QtCore import Qt, QSize, QSettings, QMimeData
+from PyQt5.QtGui import QIcon, QDrag, QPixmap, QCursor
 from PyQt5 import uic
 import sys
 import urllib3
@@ -49,6 +49,13 @@ class MainWindow(QMainWindow):
         self.saveButton.clicked.connect(self.save_handler)
         self.settingsButton.clicked.connect(self.open_settings)
         self.dbButton.clicked.connect(self.open_db_widget)
+
+        self.imageLabel.mousePressEvent = self.mousePressEvent
+        self.imageLabel.mouseMoveEvent = self.mouseMoveEvent
+        self.imageLabel.mouseReleaseEvent = self.mouseReleaseEvent
+
+        self.drag_data = {'start_pos': None, 'is_dragging': False}
+
         self.update_ui()
 
     def get_picture_handler(self):
@@ -84,6 +91,9 @@ class MainWindow(QMainWindow):
                     elif self.dislikeButton.isChecked():
                         opinion = 'Dislike'
 
+                    if text == "":
+                        text = " "
+
                     print(f'saving {self.current_image.url}')
                     save_item = Record(None, self.current_image.title, self.current_image.url,
                                        opinion, text)
@@ -97,16 +107,6 @@ class MainWindow(QMainWindow):
 
             except InvalidRecordException as e:
                 QMessageBox.critical(self, "Error", f"Critical error: {e.message}", QMessageBox.Ok)
-
-    def open_settings(self):
-        self.settings_widget.exec_()
-        print('Opened settings window')
-        self.update_ui()
-
-    def open_db_widget(self):
-        self.db_widget.exec_()
-        print('Opened database editor')
-        self.update_ui()
 
     def load_images_from_db(self):
         self.db_items = retrieve_items()
@@ -135,6 +135,55 @@ class MainWindow(QMainWindow):
             self.current_image = Picture('', 'No picture was loaded')
             self.current_image.render_picture(self.imageLabel, self.titleLabel)
             raise EmptyDataBaseException
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag_data['start_pos'] = event.pos()
+
+    def mouseMoveEvent(self, event):
+        if self.drag_data['start_pos'] is not None:
+            mime_data = QMimeData()
+            drag = QDrag(self)
+            drag.setMimeData(mime_data)
+            result = drag.exec_(Qt.MoveAction)
+
+            global_pos = QCursor.pos()
+            if not self.rect().contains(self.mapFromGlobal(global_pos)):
+                self.save_image()
+
+            drag.deleteLater()
+
+    def mouseReleaseEvent(self, event):
+        self.drag_data['start_pos'] = None
+
+    def save_image(self):
+        if self.current_image.url:
+            file_path, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
+                                                       "Images (*.png *.jpg *.bmp);;All Files (*)")
+            if file_path:
+                pixmap = QPixmap()
+                pixmap.loadFromData(self.current_image.get_data())
+                pixmap.save(file_path)
+        else:
+            QMessageBox.warning(self, 'Error', "Cannot download an empty image.", QMessageBox.Ok)
+
+    def dropEvent(self, event):
+        mime_data = event.mimeData()
+        if mime_data.hasUrls() and len(mime_data.urls()) == 1:
+            event.acceptProposedAction()
+            url = mime_data.urls()[0]
+            self.load_image_from_url_handler(url)
+
+    def open_settings(self):
+        self.settings_widget.exec_()
+        print('Opened settings window')
+        self.update_ui()
+
+    def open_db_widget(self):
+        self.db_widget.exec_()
+        print('Opened database editor')
+        self.update_ui()
+
 
     def update_ui(self):
         self.saveButton.setEnabled(not self.check_settings())
