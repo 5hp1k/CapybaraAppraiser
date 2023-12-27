@@ -13,6 +13,7 @@ from capy_exceptions import *
 
 
 class MainWindow(QMainWindow):
+    """Класс главного окна приложения"""
 
     def __init__(self):
         super().__init__()
@@ -28,6 +29,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowIcon(QIcon('resources/images/icon.png'))
 
+        # Путь к иконкам для кнопок
         icon_paths = {
             'likeButton': 'resources/images/like.png',
             'dislikeButton': 'resources/images/dislike.png',
@@ -54,11 +56,13 @@ class MainWindow(QMainWindow):
         self.imageLabel.mouseMoveEvent = self.mouseMoveEvent
         self.imageLabel.mouseReleaseEvent = self.mouseReleaseEvent
 
+        # Словарь переменных для метода drag and drop
         self.drag_data = {'start_pos': None, 'is_dragging': False}
 
         self.update_ui()
 
     def get_picture_handler(self):
+        """Обработчик нажатия на кнопку getPicture"""
         try:
             if self.check_settings():  # Если в настройках стоит галочка
                 print("Loading a picture from the database...")
@@ -80,6 +84,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f'An error occurred while resolving the host name: {e}', QMessageBox.Ok)
 
     def save_handler(self):
+        """Обработчик нажатия на кнопку сохранения изображения в БД"""
         text, ok_pressed = QInputDialog.getText(self, "Save",
                                                 "Comment the picture you want to save:", QLineEdit.Normal, "")
         if ok_pressed:
@@ -109,6 +114,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, "Error", f"Critical error: {e.message}", QMessageBox.Ok)
 
     def load_images_from_db(self):
+        """Метод загрузки изображений из БД, активируемый нажатием на чекбокс в настройках"""
         self.db_items = retrieve_items()
 
         if self.db_items:
@@ -137,10 +143,12 @@ class MainWindow(QMainWindow):
             raise EmptyDataBaseException
 
     def mousePressEvent(self, event):
+        """Обработчик события нажатия мыши для реализации функциональности Drag and Drop"""
         if event.button() == Qt.LeftButton:
             self.drag_data['start_pos'] = event.pos()
 
     def mouseMoveEvent(self, event):
+        """Обработчик события перемещения курсора мыши для реализации функциональности Drag and Drop"""
         if self.drag_data['start_pos'] is not None:
             mime_data = QMimeData()
             drag = QDrag(self)
@@ -154,9 +162,11 @@ class MainWindow(QMainWindow):
             drag.deleteLater()
 
     def mouseReleaseEvent(self, event):
+        """Обработчик события отпускания левой кнопки мыши для реализации функциональности Drag and Drop"""
         self.drag_data['start_pos'] = None
 
     def save_image(self):
+        """Сохранение изображение на ПК пользователя при перетаскивании его при помощи Drag and Drop"""
         if self.current_image.url:
             file_path, _ = QFileDialog.getSaveFileName(self, "Save Image", "",
                                                        "Images (*.png *.jpg *.bmp);;All Files (*)")
@@ -168,6 +178,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, 'Error', "Cannot download an empty image.", QMessageBox.Ok)
 
     def dropEvent(self, event):
+        """Обработчик события drop для метода Drag and Drop"""
         mime_data = event.mimeData()
         if mime_data.hasUrls() and len(mime_data.urls()) == 1:
             event.acceptProposedAction()
@@ -175,28 +186,32 @@ class MainWindow(QMainWindow):
             self.load_image_from_url_handler(url)
 
     def open_settings(self):
+        """Метод открытия окна настроек"""
         self.settings_widget.exec_()
         print('Opened settings window')
         self.update_ui()
 
     def open_db_widget(self):
+        """Метод открытия окна для взаимодействия с БД"""
         self.db_widget.exec_()
         print('Opened database editor')
         self.update_ui()
 
-
     def update_ui(self):
+        """Метод, которые делает кнопки активными/неактивными в зависимости от настроек"""
         self.saveButton.setEnabled(not self.check_settings())
         self.likeButton.setEnabled(not self.check_settings())
         self.dislikeButton.setEnabled(not self.check_settings())
 
     @staticmethod
     def check_settings():
+        """Статический метод загрузки настроек"""
         settings = QSettings('MyApp', 'MySettings')
         return settings.value('saveBox', False, type=bool)
 
 
 def except_hook(cls, exception, traceback):
+    """Метод, который необходим для корректного отображения ошибок PyQt5"""
     sys.__excepthook__(cls, exception, traceback)
 
 

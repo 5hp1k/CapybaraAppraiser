@@ -7,6 +7,7 @@ from capy_exceptions import RecordIdTypeException, EmptyDataBaseException
 
 
 class DbWidget(QDialog):
+    """"""
     def __init__(self):
         super().__init__()
         uic.loadUi('resources/ui/db_widget.ui', self)

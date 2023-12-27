@@ -6,6 +6,7 @@ from capy_exceptions import InvalidSettingsException
 
 
 class SettingsWidget(QDialog):
+    """Класс окна настроек приложения"""
     def __init__(self):
         super().__init__()
         uic.loadUi('resources/ui/settings_widget.ui', self)
@@ -23,11 +24,12 @@ class SettingsWidget(QDialog):
         self.discardButton.clicked.connect(self.discard_handler)
 
     def discard_handler(self):
+        """Отмена изменений в настройках"""
         self.hide()
         print("Discarded settings and closed the settings window.")
 
     def apply_handler(self):
-        # Сохранение состояния чекбокса
+        """Сохранение состояния чекбокса и запись в объект QSettings"""
         settings = QSettings('MyApp', 'MySettings')
         settings.setValue('saveBox', self.saveBox.isChecked())
 

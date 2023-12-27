@@ -5,6 +5,7 @@ from capy_exceptions import PictureClassInitError
 
 
 class Picture:
+    """Класс изображения, получаемого по API и отображаемого в главном окне приложения"""
     def __init__(self, url, title):
         if type(url) is str and type(title) is str:
             self.url = url
@@ -12,7 +13,12 @@ class Picture:
         else:
             raise PictureClassInitError
 
+    def get_data(self):
+        """Метод получения контента изображения через requests путем отправки запроса на сервер с API"""
+        return requests.get(self.url).content
+
     def render_picture(self, output_label, title_label):
+        """Метод отрисовки полученного в get_data() изображения"""
         try:
             if not self.url or self.url == '':
                 # Очистка Pixmap, если URL пуст
@@ -20,7 +26,7 @@ class Picture:
                 title_label.clear()
             else:
                 pixmap = QPixmap()
-                pixmap.loadFromData(requests.get(self.url).content)
+                pixmap.loadFromData(self.get_data())
                 scaled_pixmap = pixmap.scaled(output_label.size())
                 output_label.setPixmap(scaled_pixmap)
 
@@ -34,9 +40,6 @@ class Picture:
                                                                                            title_label)
         except PictureClassInitError as e:
             return Picture('', e.message).render_picture(output_label, title_label)
-
-    def get_data(self):
-        return requests.get(self.url).content
 
 
 def get_picture():

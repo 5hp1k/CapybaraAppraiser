@@ -12,6 +12,7 @@ def app(qtbot):
     return test_app
 
 
+# Тест начального состояния, проверяющий, отжаты ли все кнопки и галочкав настройках
 def test_initial_state(app):
     assert not app.check_settings()
     assert app.likeButton.isEnabled()
@@ -21,16 +22,19 @@ def test_initial_state(app):
     assert not app.dislikeButton.isChecked()
 
 
+# Тест, кликающий на кнопку лайка
 def test_toggle_like_button(app, qtbot):
     qtbot.mouseClick(app.likeButton, Qt.LeftButton)
     assert app.likeButton.isChecked()
 
 
+# Тест, кликающий на кнопку дизлайка
 def test_toggle_dislike_button(app, qtbot):
     qtbot.mouseClick(app.dislikeButton, Qt.LeftButton)
     assert app.dislikeButton.isChecked()
 
 
+# Тест, проверяющий активна ли кнопка сохранения изображения после клика по лайку или дизлайку
 def test_save_button_enabled_after_toggle(app, qtbot):
     qtbot.mouseClick(app.likeButton, Qt.LeftButton)
     assert app.saveButton.isEnabled()
@@ -39,6 +43,7 @@ def test_save_button_enabled_after_toggle(app, qtbot):
     assert app.saveButton.isEnabled()
 
 
+# Метод, добавялющий две записи в базу данных
 @pytest.fixture
 def setup_database():
     clear_table()
@@ -51,6 +56,7 @@ def setup_database():
         insert_record(data)
 
 
+# Тест, проверяющий, загружает ли база данных две добавленные в нее записи
 def test_load_images_from_db(app, qtbot, setup_database):
     qtbot.mouseClick(app.dbButton, Qt.LeftButton)
     print("Opening db_widget...")

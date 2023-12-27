@@ -14,6 +14,7 @@ class Record:
 
 
 def get_connection():
+    """Инициализация файла БД и подключение к нему"""
     connection = None
     try:
         connection = sqlite3.connect('capybara.db')
@@ -63,6 +64,7 @@ def insert_record(record):
 
 
 def update_item(record):
+    """Изменение атрибутов какого-то объекта в БД"""
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -76,6 +78,7 @@ def update_item(record):
 
 
 def delete_item(item_id):
+    """Удаление записи из БД"""
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -90,6 +93,7 @@ def delete_item(item_id):
 
 
 def clear_table():
+    """Очистка таблицы в БД"""
     conn = get_connection()
     cursor = conn.cursor()
 
